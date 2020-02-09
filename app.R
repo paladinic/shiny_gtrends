@@ -68,7 +68,7 @@ server <- function(input, output, session) {
     v = v[!is.na(v)]
     v = c("all",v)
     
-    selectizeInput(inputId = "geo", label = "Location", selected = "Italy", choices = v)
+    selectizeInput(inputId = "geo", label = "Location", selected = "IT", choices = v)
   })
   get_time = reactive({
     time = TRY(input$time)
