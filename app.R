@@ -4,6 +4,14 @@ library(gtrendsR)
 library(plotly)
 library(shinycssloaders)
 
+TRY = function(x){
+  tryCatch(
+    x,
+    error = function(e)
+      NULL
+  )}
+
+
 # ui   ####
 ui <- fluidPage(
   tags$title("GTrends"),
@@ -30,7 +38,9 @@ ui <- fluidPage(
       label = NULL,
       value = "",
       placeholder = "Enter keywords separated by ';'"
-    )),
+    ),
+    selectizeInput(inputId = "time", label = "Time", selected = "all", choices = c("now 1-H","now 4-H","now 1-d","now 7-d","now 1-m","now 4-m","today+5-year","all")),
+    uiOutput("time_ui")),
   column(
     4,
     actionButton("get_gt_btn",
@@ -53,20 +63,41 @@ server <- function(input, output, session) {
     k = strsplit(x = k, split = ";")[[1]]
     return(k)
   })
+  output$time_ui = renderUI({
+    v = unique(countrycode::codelist$ecb)
+    v = v[!is.na(v)]
+    v = c("all",v)
+    
+    selectizeInput(inputId = "geo", label = "Location", selected = "Italy", choices = v)
+  })
+  get_time = reactive({
+    time = TRY(input$time)
+    if(is.null(time)){
+      time = "all"
+    }
+    time
+  })
+  get_geo = reactive({
+    geo = TRY(input$geo)
+    if(is.null(geo)){
+      geo = "all"
+    }
+    geo
+  })
   
-  chart_title = eventReactive(input$get_gt_btn,{get_keywords()})
+  chart_title = eventReactive(input$get_gt_btn,{paste0(paste0(get_keywords(),collapse = ", ")," - ",get_geo()," - ",get_time())})
   
-  search_f = function(){  
-    output = gtrends(keyword = keyword)  
+  search_f = function(keyword,time,geo){  
+    output = gtrends(keyword = keyword,time = time,geo = geo)  
   }
   
   get_trend = eventReactive(input$get_gt_btn, {
     len = length(get_keywords())
     
     if (len < 6) {
-      df = gtrends(get_keywords())$interest_over_time
+      df = search_f(get_keywords(),get_time(),get_geo())$interest_over_time
       
-      if (is.character(df$hits)) {
+      if(is.character(df$hits)) {
         df$hits[df$hits == "<1"] = 0
         df$hits = as.numeric(df$hits)
       }
@@ -145,7 +176,7 @@ server <- function(input, output, session) {
       y = ~ hits,
       type = 'scatter',
       mode = 'lines'
-    ) %>% layout(title = paste0(chart_title(), collapse = ", "))
+    ) %>% layout(title = chart_title())
   })
   
   output$downloadData <- downloadHandler(
