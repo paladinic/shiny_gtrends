@@ -17,46 +17,51 @@ TRY = function(x) {
 # ui   ####
 ui <- fluidPage(
   tags$title("GTrends"),
-# Head --------------------------------------------------------------------
-
-
+  # Head --------------------------------------------------------------------
   tags$head(tags$script(
     HTML(
       '$(document).keyup(function(event){if(event.keyCode == 13){$("#get_gt_btn").click();}});'
     )
   )),
-  tags$head(tags$style(
-    HTML("*{text-align:center !important;margin:5px auto !important;}")
-  )),
-
-# Body --------------------------------------------------------------------
-  fluidRow(column(4, h3(
-    "Google Trends (lite) in Shiny"
-  )),
-  column(
-    4,
-    textInput(
-      "keywords",
-      label = NULL,
-      value = "",
-      placeholder = "Enter keywords separated by ';'"
+  
+  
+  # Body --------------------------------------------------------------------
+  h3("Google Trends (lite) in Shiny"),
+  sidebarLayout(
+    sidebarPanel = sidebarPanel(
+      textInput(
+        "keywords",
+        label = NULL,
+        value = "",
+        placeholder = "Enter keywords separated by ';'"
+      ),
+      selectizeInput(
+        inputId = "time",
+        label = "Time",
+        selected = "all",
+        choices = c(
+          "now 1-H",
+          "now 4-H",
+          "now 1-d",
+          "now 7-d",
+          "now 1-m",
+          "now 4-m",
+          "today+5-year",
+          "all"
+        )
+      ),
+      uiOutput("geo_ui"),
+      actionButton("get_gt_btn",
+                   width = "300px",
+                   "Get Google Trends"),
+      downloadButton("downloadData", "Download Data")
     ),
-    selectizeInput(inputId = "time", label = "Time", selected = "all", choices = c("now 1-H","now 4-H","now 1-d","now 7-d","now 1-m","now 4-m","today+5-year","all")),
-    uiOutput("geo_ui")),
-  column(
-    4,
-    actionButton("get_gt_btn",
-                 width = "300px",
-                     "Get Google Trends")
-  )),
-  hr(),
-  downloadButton("downloadData", "Download Data"),
-  withSpinner(plotlyOutput("plot"))
+    mainPanel = mainPanel(withSpinner(plotlyOutput("plot")))
+  )
 )
 
 # serv ####
 server <- function(input, output, session) {
-  
   get_keywords = reactive({
     k = input$keywords
     if (k == "") {
@@ -68,33 +73,46 @@ server <- function(input, output, session) {
   output$geo_ui = renderUI({
     v = unique(codelist$ecb)
     v = v[!is.na(v)]
-    v = c("all",v)
+    v = c("all", v)
     
-    selectizeInput(inputId = "geo", label = "Location", selected = "all", choices = v)
+    selectizeInput(
+      inputId = "geo",
+      label = "Location",
+      selected = "all",
+      choices = v
+    )
   })
   get_time = reactive({
     time = TRY(input$time)
-    if(is.null(time)){
+    if (is.null(time)) {
       time = "all"
     }
     time
   })
   get_geo = reactive({
     geo = TRY(input$geo)
-    if(is.null(geo)){
+    if (is.null(geo)) {
       geo = "all"
     }
     geo
   })
   
-  chart_title = eventReactive(input$get_gt_btn,{paste0(paste0(get_keywords(),collapse = ", ")," - ",get_geo()," - ",get_time())})
+  chart_title = eventReactive(input$get_gt_btn, {
+    paste0(paste0(get_keywords(), collapse = ", "),
+           " - ",
+           get_geo(),
+           " - ",
+           get_time())
+  })
   
-  search_f = function(keyword,time,geo){
-    if(geo == "all"){
-      o = gtrends(keyword = keyword,time = time)   
+  search_f = function(keyword, time, geo) {
+    if (geo == "all") {
+      o = gtrends(keyword = keyword, time = time)
     }
     else{
-      o = gtrends(keyword = keyword,time = time,geo = geo)
+      o = gtrends(keyword = keyword,
+                  time = time,
+                  geo = geo)
     }
     o
   }
@@ -103,9 +121,9 @@ server <- function(input, output, session) {
     len = length(get_keywords())
     
     if (len < 6) {
-      df = search_f(get_keywords(),get_time(),get_geo())$interest_over_time
+      df = search_f(get_keywords(), get_time(), get_geo())$interest_over_time
       
-      if(is.character(df$hits)) {
+      if (is.character(df$hits)) {
         df$hits[df$hits == "<1"] = 0
         df$hits = as.numeric(df$hits)
       }
@@ -116,8 +134,8 @@ server <- function(input, output, session) {
       
       kw_s = get_keywords()[5]
       
-      df_1 = search_f(kw_1,get_time(),get_geo())$interest_over_time
-      df_2 = search_f(kw_2,get_time(),get_geo())$interest_over_time
+      df_1 = search_f(kw_1, get_time(), get_geo())$interest_over_time
+      df_2 = search_f(kw_2, get_time(), get_geo())$interest_over_time
       
       if (is.character(df_1$hits)) {
         df_1$hits[df_1$hits == "<1"] = 0
@@ -135,18 +153,18 @@ server <- function(input, output, session) {
       
       df_1$hits = df_1$hits / scalar
       
-      df = rbind(df_1,df_2[df_2$keyword != kw_s,])
+      df = rbind(df_1, df_2[df_2$keyword != kw_s, ])
     }
     if (len >= 10 & len < 13) {
       kw_1 = get_keywords()[1:5]
       kw_2 = get_keywords()[5:9]
-      kw_3 = get_keywords()[c(5,10:len)]
+      kw_3 = get_keywords()[c(5, 10:len)]
       
       kw_s = get_keywords()[5]
       
-      df_1 = search_f(kw_1,get_time(),get_geo())$interest_over_time
-      df_2 = search_f(kw_2,get_time(),get_geo())$interest_over_time
-      df_3 = search_f(kw_3,get_time(),get_geo())$interest_over_time
+      df_1 = search_f(kw_1, get_time(), get_geo())$interest_over_time
+      df_2 = search_f(kw_2, get_time(), get_geo())$interest_over_time
+      df_3 = search_f(kw_3, get_time(), get_geo())$interest_over_time
       
       if (is.character(df_1$hits)) {
         df_1$hits[df_1$hits == "<1"] = 0
@@ -171,7 +189,7 @@ server <- function(input, output, session) {
       df_1$hits = df_1$hits / scalar_1
       df_3$hits = df_3$hits / scalar_2
       
-      df = rbind(df_1,df_2[df_2$keyword != kw_s,],df_3[df_3$keyword != kw_s,])
+      df = rbind(df_1, df_2[df_2$keyword != kw_s, ], df_3[df_3$keyword != kw_s, ])
     }
     return(df)
   })
