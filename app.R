@@ -51,9 +51,7 @@ ui <- fluidPage(
         )
       ),
       uiOutput("geo_ui"),
-      actionButton("get_gt_btn",
-                   width = "300px",
-                   "Get Google Trends"),
+      actionButton("get_gt_btn","Get Google Trends"),
       downloadButton("downloadData", "Download Data")
     ),
     mainPanel = mainPanel(withSpinner(plotlyOutput("plot")))
