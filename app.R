@@ -44,9 +44,9 @@ ui <- fluidPage(
           "now 4-H",
           "now 1-d",
           "now 7-d",
-          "now 1-m",
-          "now 4-m",
-          "today+5-year",
+          "today 1-m",
+          "today 4-m",
+          "today+5-y",
           "all"
         )
       ),
