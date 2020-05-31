@@ -1,5 +1,6 @@
 # libs ####
 library(shiny)
+# devtools::install_github("PMassicotte/gtrendsR")
 library(gtrendsR)
 library(plotly)
 library(shinycssloaders)
