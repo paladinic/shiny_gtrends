@@ -53,8 +53,11 @@ ui <- fluidPage(
         )
       ),
       uiOutput("geo_ui"),
+      hr(),
       actionButton("get_gt_btn","Get Google Trends"),
-      downloadButton("downloadData", "Download Data")
+      downloadButton("downloadData", "Download Data"),
+      hr(),
+      tags$a(href = "https://github.com/paladinic/shiny_gtrends","Code")
     ),
     mainPanel = mainPanel(withSpinner(plotlyOutput("plot")))
   )
