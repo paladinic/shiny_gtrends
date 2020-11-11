@@ -1,9 +1,9 @@
 # libs ####
 library(shiny)
-# devtools::install_github("PMassicotte/gtrendsR")
 library(gtrendsR)
 library(plotly)
 library(shinycssloaders)
+library(shinythemes)
 library(countrycode)
 
 TRY = function(x) {
@@ -17,6 +17,7 @@ TRY = function(x) {
 
 # ui   ####
 ui <- fluidPage(
+  theme = shinytheme("yeti"),
   tags$title("GTrends"),
   # Head --------------------------------------------------------------------
   tags$head(tags$script(
