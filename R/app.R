@@ -17,7 +17,7 @@ TRY = function(x) {
 
 # ui   ####
 ui <- fluidPage(
-  theme = shinytheme("yeti"),
+  theme = shinytheme("darkly"),
   tags$title("GTrends"),
   # Head --------------------------------------------------------------------
   tags$head(tags$script(
