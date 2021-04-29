@@ -25,8 +25,8 @@ ui <- fluidPage(
       '$(document).keyup(function(event){if(event.keyCode == 13){$("#get_gt_btn").click();}});'
     )
   )),
-  
-  
+
+
   # Body --------------------------------------------------------------------
   h3("Google Trends (lite) in Shiny"),
   sidebarLayout(
@@ -77,7 +77,7 @@ server <- function(input, output, session) {
     v = unique(codelist$ecb)
     v = v[!is.na(v)]
     v = c("all", v)
-    
+
     selectizeInput(
       inputId = "geo",
       label = "Location",
@@ -99,7 +99,7 @@ server <- function(input, output, session) {
     }
     geo
   })
-  
+
   chart_title = eventReactive(input$get_gt_btn, {
     paste0(paste0(get_keywords(), collapse = ", "),
            " - ",
@@ -107,7 +107,7 @@ server <- function(input, output, session) {
            " - ",
            get_time())
   })
-  
+
   search_f = function(keyword, time, geo) {
     if (geo == "all") {
       o = gtrends(keyword = keyword, time = time)
@@ -119,13 +119,13 @@ server <- function(input, output, session) {
     }
     o
   }
-  
+
   get_trend = eventReactive(input$get_gt_btn, {
     len = length(get_keywords())
-    
+
     if (len < 6) {
       df = search_f(get_keywords(), get_time(), get_geo())$interest_over_time
-      
+
       if (is.character(df$hits)) {
         df$hits[df$hits == "<1"] = 0
         df$hits = as.numeric(df$hits)
@@ -134,12 +134,12 @@ server <- function(input, output, session) {
     if (len >= 6 & len < 10) {
       kw_1 = get_keywords()[1:5]
       kw_2 = get_keywords()[5:len]
-      
+
       kw_s = get_keywords()[5]
-      
+
       df_1 = search_f(kw_1, get_time(), get_geo())$interest_over_time
       df_2 = search_f(kw_2, get_time(), get_geo())$interest_over_time
-      
+
       if (is.character(df_1$hits)) {
         df_1$hits[df_1$hits == "<1"] = 0
         df_1$hits = as.numeric(df_1$hits)
@@ -148,27 +148,27 @@ server <- function(input, output, session) {
         df_2$hits[df_2$hits == "<1"] = 0
         df_2$hits = as.numeric(df_2$hits)
       }
-      
+
       avg_1 = mean(df_1[df_1$keyword == kw_s, "hits"])
       avg_2 = mean(df_2[df_2$keyword == kw_s, "hits"])
-      
+
       scalar = avg_1 / avg_2
-      
+
       df_1$hits = df_1$hits / scalar
-      
+
       df = rbind(df_1, df_2[df_2$keyword != kw_s, ])
     }
     if (len >= 10 & len < 13) {
       kw_1 = get_keywords()[1:5]
       kw_2 = get_keywords()[5:9]
       kw_3 = get_keywords()[c(5, 10:len)]
-      
+
       kw_s = get_keywords()[5]
-      
+
       df_1 = search_f(kw_1, get_time(), get_geo())$interest_over_time
       df_2 = search_f(kw_2, get_time(), get_geo())$interest_over_time
       df_3 = search_f(kw_3, get_time(), get_geo())$interest_over_time
-      
+
       if (is.character(df_1$hits)) {
         df_1$hits[df_1$hits == "<1"] = 0
         df_1$hits = as.numeric(df_1$hits)
@@ -181,22 +181,22 @@ server <- function(input, output, session) {
         df_3$hits[df_3$hits == "<1"] = 0
         df_3$hits = as.numeric(df_3$hits)
       }
-      
+
       avg_1 = mean(df_1[df_1$keyword == kw_s, "hits"])
       avg_2 = mean(df_2[df_2$keyword == kw_s, "hits"])
       avg_3 = mean(df_3[df_3$keyword == kw_s, "hits"])
-      
+
       scalar_1 = avg_1 / avg_2
       scalar_2 = avg_3 / avg_2
-      
+
       df_1$hits = df_1$hits / scalar_1
       df_3$hits = df_3$hits / scalar_2
-      
+
       df = rbind(df_1, df_2[df_2$keyword != kw_s, ], df_3[df_3$keyword != kw_s, ])
     }
     return(df)
   })
-  
+
   output$plot = renderPlotly({
     plot_ly(
       data = get_trend(),
@@ -207,7 +207,7 @@ server <- function(input, output, session) {
       mode = 'lines'
     ) %>% layout(title = chart_title())
   })
-  
+
   output$downloadData <- downloadHandler(
     filename = function() {
       paste0("Google_Trend_", Sys.Date(), "_Download.csv", sep = "")

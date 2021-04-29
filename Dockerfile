@@ -1,25 +1,32 @@
-get shiny server plus tidyverse packages image
-FROM rocker/shiny-verse:latest
+# Base image https://hub.docker.com/u/rocker/
+FROM rocker/shiny:latest
+
 # system libraries of general use
-RUN apt-get update && apt-get install -y \
-   sudo \
-   pandoc \
-   pandoc-citeproc \
-   libcurl4-gnutls-dev \
-   libcairo2-dev \
-   libxt-dev \
-   libssl-dev \
-   libssh2-1-dev
-# install R packages required
-# (change it depending on the packages you need)
-RUN R -e "install.packages('shinydashboard','shinyjs','gtrendsR','plotly','shinycssloaders','shinythemes','countrycode', repos='http://cran.rstudio.com/')"
-# Copy configuration files into the Docker image
-COPY shiny-server.conf  /etc/shiny-server/shiny-server.conf
-COPY /app /srv/shiny-server/
-RUN rm /srv/shiny-server/index.html
-# Make the ShinyApp available at port 80
-EXPOSE 80
-# Copy further configuration files into the Docker image
-COPY shiny-server.sh /usr/bin/shiny-server.sh
-RUN ["chmod", "+x", "/usr/bin/shiny-server.sh"]
-CMD ["/usr/bin/shiny-server.sh"]
+## install debian packages
+RUN apt-get update -qq && apt-get -y --no-install-recommends install \
+    libxml2-dev \
+    libcairo2-dev \
+    libsqlite3-dev \
+    libmariadbd-dev \
+    libpq-dev \
+    libssh2-1-dev \
+    unixodbc-dev \
+    libcurl4-openssl-dev \
+    libssl-dev
+
+## update system libraries
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean
+
+
+RUN R -e "install.packages(c('shinythemes','shinycssloaders','gtrendsR','plotly','countrycode', repos='http://cran.rstudio.com/'))"
+
+RUN mkdir /root/app
+
+COPY R /root/shiny_save
+
+EXPOSE 3838
+
+# RUN dos2unix /usr/bin/shiny-server.sh && apt-get --purge remove -y dos2unix && rm -rf /var/lib/apt/lists/*
+CMD ["R", "-e", "shiny::runApp('/root/shiny_save', host='0.0.0.0', port=3838)"]
